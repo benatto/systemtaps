@@ -1,0 +1,9 @@
+probe kernel.function("follow_page_mask").call {
+	printf("%s -> %s\n", thread_indent(1), probefunc());
+	printf("\tParameters informed: %s\n", $$parms$);
+
+}
+
+probe kernel.function("follow_page_mask").return {
+	printf("%s <- %s\n", thread_indent(-1), probefunc());
+}

@@ -1,0 +1,22 @@
+global pname;
+
+function __do_trace:long() {
+	return (execname() == "test1");
+}
+
+probe begin {
+	printf("%s\n", execname());
+	pname = "firefox";
+}
+
+probe vm.*.call {
+	if (__do_trace()) {
+		printf("%s -> %s\n", thread_indent(1), probefunc());
+	}
+}
+
+probe vm.*.return {
+	if (__do_trace()) {
+		printf("%s <- %s\n", thread_indent(-1), probefunc());
+	}
+}

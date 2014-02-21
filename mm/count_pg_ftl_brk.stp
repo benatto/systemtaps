@@ -1,0 +1,38 @@
+global brknum, faults;
+
+probe begin {
+	brknum = 0;
+	faults = 0;
+}
+
+
+probe end {
+	printf("====== Memory Summary for %s ======\n", execname());
+	printf("\tbrk syscall numbers: %d\n", brknum);
+	printf("\tPage fault count: %d\n", faults);
+	printf("========================================\n");
+}
+
+probe vm.brk.call {
+	if (execname() == "test1") {
+		printf("%s called %s\n", thread_indent(1), probefunc());
+		brks++;
+	}
+}
+
+probe vm.brk.return {
+	if (execname() == "test1")
+		printf("%s returning from %s\n", thread_indent(-1), probefunc());
+}
+
+probe vm.pagefault.call {
+	if (execname() == "test1") {
+		printf("%s called %s\n", thread_indent(1), probefunc());
+		faults++;
+	}
+}
+
+probe vm.pagefault.return {
+	if (execname() == "test1")
+		printf("%s returning from %s\n", thread_indent(-1), probefunc());
+}
