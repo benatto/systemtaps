@@ -1,0 +1,55 @@
+/*Needed by ATOM_DEVICE_LCD_SUPPORT macro in C-pure mode*/
+%{
+#include "/home/oem/Downloads/linux-3.10.9/drivers/gpu/drm/radeon/atom-types.h"
+#include "/home/oem/Downloads/linux-3.10.9/drivers/gpu/drm/radeon/atombios.h"
+#include "/home/oem/Downloads/linux-3.10.9/drivers/gpu/drm/radeon/ObjectID.h"
+%}
+
+
+/* ======= radeon_legacy_set_backlight_level ========= */
+probe module("radeon").function("atombios_set_backlight_level").call{
+	printf("%s -> %s\n", thread_indent(1), probefunc());
+	printf("Parameters: %s\n", $$parms);
+
+	devices = @cast(@var("radeon_encoder"), "struct radeon_encoder")->devices;
+
+	printf("New level: %d\n", @var("level"));
+	printf("Encoder devices: %d\n", devices);
+
+	enc_priv = @cast(@var("radeon_encoder"), "struct radeon_encoder")->enc_priv;
+
+	if ((devices & %{ ATOM_DEVICE_LCD_SUPPORT %}) && enc_priv != NULL){
+		printf("ATOM device supported\n");
+		if (@cast(@var("radeon_encoder"), "struct radeon_encoder")->encoder_id == %{ ENCODER_OBJECT_ID_INTERNAL_LVDS %}
+			|| @cast(@var("radeon_encoder"), "struct radeon_encoder")->encoder_id == %{ ENCODER_OBJECT_ID_INTERNAL_LVTM1 %}){
+				printf("Encoder_id is internal a LVDS display\n");
+	
+		}else{
+			printf("Encoder_id = %x\n", @cast(@var("radeon_encoder"), "struct radeon_encoder")->encoder_id);
+		}
+
+		printf("Paramenters sent to backlight_level_to_reg:\n");
+		printf("\tbacklight_level: %x\n", @var("level"));
+		printf("===========================================\n");
+	}else{
+		printf("ATOM device not supported skipping\n");
+	}
+}
+
+probe module("radeon").function("atombios_set_backlight_level").return{
+	printf("%s <- %s\n", thread_indent(-1), probefunc()); /*Just returning 1 in thread indentation*/
+}
+/* ================================================== */
+
+/* ======= radeon_atom_set_backlight_level_to_reg ========= */
+
+/*probe module("radeon").function("*").call{
+	printf("%s -> %s\n", thread_indent(1), probefunc());
+	printf("Parameters: %s\n", $$parms);
+}*/
+
+
+/*probe module("radeon").function("radeon_atom_set_backlight_level_to_reg").return{
+	printf("%s -> %s\n", thread_indent(-1), probefunc());
+}*/
+/* ======================================================== */

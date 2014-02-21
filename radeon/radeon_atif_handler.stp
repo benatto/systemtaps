@@ -1,0 +1,45 @@
+/*stap scripts to debug radeon module functions
+ related to backlight functionality
+ */
+
+%{
+#include "/home/oem/Downloads/linux-3.10.9/drivers/gpu/drm/radeon/radeon_acpi.h"
+%}
+
+/* ========= atif events handler function  ======= */
+probe module("radeon").function("radeon_atif_handler").call{
+	printf("%s -> %s\n", thread_indent(1), probefunc())
+	printf("Parameters: \n%s\n\n", $$parms$);
+	printf("Event type: %#x\n", @var("event")->type);
+	
+
+	/*getting chipset family*/
+	family = @cast(@var("rdev"), "struct radeon_device")->family
+
+	/*getting radeon atif from radeon device*/
+	enc = @cast(@var("rdev"), "struct radeon_device")->atif->encoder_for_bl;
+
+	/*get addr from set_backlight_level for radeon_device*/
+	bfunction = @cast(@var("rdev"), "struct radeon_device")->asic->display->set_backlight_level;
+
+	printf("bfunction: %x\n", bfunction);
+
+	if (enc != NULL && @var("event")->type == %{ ATIF_PANEL_BRIGHTNESS_CHANGE_REQUEST %} ){
+		printf("radeon_encoder defined, will change brightness\n");
+		if (@var("rdev")->is_atom_bios){
+			printf("ATOM bios detected\n");
+		}else{
+			printf("ATOM bios not defined\n");
+		}
+	}else{
+		printf("radeon_encoder is not defined, skipping\n");
+		exit(); 
+	}
+}
+
+probe module("radeon").function("radeon_atif_handler").return{
+	printf("%s <- %s - return value: %s\n", thread_indent(-1), probefunc(), $$return)
+}
+/* =================================================== */
+
+
